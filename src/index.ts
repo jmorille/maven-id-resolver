@@ -22,9 +22,7 @@ mavenUrl(artifact, undefined).then(url => {
         const filename = mavenFileName(artifact);
         const dest = fs.createWriteStream(`./${filename}`);
         res.body.pipe(dest);
-        res.body.on('error', err => {
-            reject(err);
-        });
+        res.body.on('error', err => { reject(err) });
         res.body.on('data', chunk => hash.update(chunk));
         res.body.on('data', chunk => hashMd5.update(chunk));
         dest.on('finish', () => {
