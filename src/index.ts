@@ -21,7 +21,6 @@ mavenUrl(artifact, undefined).then(url => {
         const hashMd5 = crypto.createHash('md5');
         const filename = mavenFileName(artifact);
         const dest = fs.createWriteStream(`./${filename}`);
-        res.body.pipe(dest);
         res.body.on('error', err => { reject(err) });
         res.body.on('data', chunk => hash.update(chunk));
         res.body.on('data', chunk => hashMd5.update(chunk));
@@ -30,6 +29,7 @@ mavenUrl(artifact, undefined).then(url => {
             const md5  = hashMd5.digest('hex');
             resolve( {filename, sha1, md5});
         });
+        res.body.pipe(dest);
         dest.on('error', err => {
             reject(err);
         });
