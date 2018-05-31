@@ -1,16 +1,15 @@
 {
   "compilerOptions": {
-    "target": "es6",
+    "outDir": "./dist/",
+    "noImplicitAny": true,
     "module": "commonjs",
-    "outDir": "dist",
-    "sourceMap": true
+    "target": "es2018",
+    "lib": ["es2018"],
+    "sourceMap": true,
+    "allowJs": true
   },
-  "files": [
-    "./node_modules/@types/mocha/index.d.ts",
-    "./node_modules/@types/node/index.d.ts"
-  ],
   "include": [
-    "src/**/*.ts"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules"
