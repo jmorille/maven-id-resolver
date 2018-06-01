@@ -6,6 +6,10 @@
 /dist
 /build
 
+# Run
+/*.jar
+/*.war
+
 # Logs
 logs
 *.log

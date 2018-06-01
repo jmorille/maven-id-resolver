@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "npm-run-all --parallel watch:build test",
     "test": "nodemon src/index.js",
-    "watch:build": "webpack --mode=development --watch",
+    "build:watch": "webpack --mode=development --watch",
     "build": "webpack --mode=development",
     "dist": "webpack --mode=production  --progress "
   },
