@@ -12,7 +12,7 @@ import mavenFileName from 'mvn-artifact-filename'
 const artifact = mavenParser('org.apache.commons:commons-lang3:3.4')
 console.log("Maven artifact", artifact);
 
-mavenUrl(artifact, undefined).then(url => {
+mavenUrl(artifact, 'http://nexus.agrica.loc/repository/maven-releases/').then(url => {
     console.log("Maven Url", url);
     return fetch (url);
 }).then(res=> {
