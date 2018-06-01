@@ -1,57 +1,35 @@
-import * as fs from 'fs';
-import * as crypto from 'crypto';
+//#!/usr/bin/env node
 
-import fetch from 'node-fetch';
-
-import mavenParser from 'mvn-artifact-name-parser'
-import mavenUrl from 'mvn-artifact-url'
-import mavenFileName from 'mvn-artifact-filename'
-
-// Config
-const repositoryUrl = 'http://nexus.agrica.loc/repository/maven-releases/';
-
-// groupId:artifactId:packaging:classifier:version
-// const artifactId = 'org.apache.commons:commons-lang3:3.4';
-const artifactId = 'fr.agrica.horodatage:hor-front-web:war:exec:0.0.1-M2';
+import mavenDownload from './maven-download'
+import { docopt } from 'docopt';
+import {Artifact} from "mvn-artifact-url";
 
 
-function downloadArtifact(artifactId: string) {
-    //
-    const artifact = mavenParser(artifactId);
-    console.log("Maven artifact", artifact);
 
-    return mavenUrl(artifact, repositoryUrl).then(url => {
-        console.log("Maven Url", url);
-        return fetch(url);
-    }).then(res => {
-        return new Promise((resolve, reject) => {
-            const hash = crypto.createHash('sha1');
-            const hashMd5 = crypto.createHash('md5');
-            const filename = mavenFileName(artifact);
-            const dest = fs.createWriteStream(`./${filename}`);
-            res.body.on('error', err => {
-                reject(err)
-            });
-            res.body.on('data', chunk => hash.update(chunk));
-            res.body.on('data', chunk => hashMd5.update(chunk));
-            dest.on('finish', () => {
-                const sha1 = hash.digest('hex');
-                const md5 = hashMd5.digest('hex');
-                resolve({filename, sha1, md5});
-            });
-            res.body.pipe(dest);
-            dest.on('error', err => {
-                reject(err);
-            });
-        });
-    });
-
-}
-
-
-downloadArtifact(artifactId).then(hash => {
-    console.log(hash);
-    return hash;
+const doc = `
+Usage:
+ mvn-dl <artifact> [options]
+Options:
+ -d --destination <destination>  Destination folder
+ -f --filename <filename>        Output filename
+ -r --repository <url>           Url to the maven repo
+Examples:
+ # download jar
+ maven-id-resolver org.apache.commons:commons-lang3:3.4
+ # download jar to dist
+ maven-id-resolver org.apache.commons:commons-lang3:3.4 -d dist
+`;
+const args = docopt(doc, { version: require('../package.json').version });
+mavenDownload(
+    args['<artifact>'],
+    args['--destination'],
+    args['--repository'],
+    args['--filename']
+).then(res => {
+    console.log(res.filename, `(sha1=${res.sha1}, md5=${res.md5})`, `in ${res.elapsedMs}ms`);
+    return res;
+}).catch(err => {
+    console.error(err);
 });
 
 

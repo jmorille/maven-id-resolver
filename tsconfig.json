@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
-    "outDir": "./dist/",
+    "declaration": true,
+    "outDir": "lib",
     "noImplicitAny": true,
     "module": "commonjs",
     "target": "es2018",
@@ -12,6 +13,6 @@
     "src/**/*"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules", "lib"
   ]
 }
