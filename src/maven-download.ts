@@ -6,7 +6,7 @@ import mavenUrl from "mvn-artifact-url";
 import mavenFileName from "mvn-artifact-filename";
 import fetch from "node-fetch";
 
-interface ArtifactDownload {
+export interface ArtifactDownload {
     artifact: Artifact;
     destDir: string;
     filename: string;
@@ -15,19 +15,28 @@ interface ArtifactDownload {
     isOk?: boolean;
     sha1Ok?: boolean;
     md5Ok?: boolean;
+    elapsedMs?: string;
 }
 
-interface ArtifactDownloadTmp extends ArtifactDownload {
+interface ArtifactDownloadTmp extends ArtifactDownload{
     destFileTmp: string;
 }
 
-export default function downloadArtifact(artifactId: string, destDir: string = './', repository: string, filename?: string) {
+export default function downloadArtifacts(artifactId: string, destDir: string, repository: string): Promise<ArtifactDownload[]>{
+    const ids = [ artifactId];
+    const promises = ids.map(id => {
+        return downloadArtifact(id, destDir, repository);
+    });
+    return Promise.all(promises);
+}
+
+export function downloadArtifact(artifactId: string, destDir?: string, repository?: string, filename?: string): Promise<ArtifactDownload>{
     // Parameters
     const start = process.hrtime();
     const artifact = mavenParser(artifactId);
     //console.log(" * Param Maven artifact", artifact);
     //console.log(' * Param directory', destDir);
-    const repositoryUrl = repository && !repository.endsWith('/') ? repository+'/' : repository;
+    const repositoryUrl = repository && !repository.endsWith('/') ? repository + '/' : repository;
     return mavenUrl(artifact, repositoryUrl).then(url => {
         //console.log("Maven Url", url);
         return [
@@ -37,13 +46,13 @@ export default function downloadArtifact(artifactId: string, destDir: string = '
             fetchHash(url, 'md5')
         ]
     })
-        .then(promises => Promise.all(promises as [Promise<any>]))
+        .then(promises => Promise.all(promises as Promise<any>[]))
         .then(([resArtifact, sha1, md5]) => {
             const sha1OK = resArtifact.sha1 === sha1;
             const md5Ok = resArtifact.md5 === md5;
             const isOk = sha1OK && md5Ok;
 
-            return {...resArtifact, isOk, sha1OK, md5Ok, sha1Src:sha1, md5Src:md5};
+            return {...resArtifact, isOk, sha1OK, md5Ok, sha1Src: sha1, md5Src: md5};
         })
         .then(renameToFinalName)
         .then(res => {
@@ -94,7 +103,7 @@ function renameToFinalName(result: ArtifactDownloadTmp): ArtifactDownload {
     const {destFileTmp, ...res} = result;
     const {destDir, filename} = res;
     if (result.isOk) {
-        const destFile = destDir?path.join(destDir, filename) : filename;
+        const destFile = destDir ? path.join(destDir, filename) : filename;
         fs.unlink(destFile, err => {
             if (err) {
                 console.log(`Could not delete ${destFile}`)

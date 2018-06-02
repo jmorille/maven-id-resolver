@@ -1,8 +1,8 @@
 //#!/usr/bin/env node
 
 import {docopt} from 'docopt';
-import  * as clc from 'cli-color';
-import mavenDownload from './maven-download'
+import * as clc from 'cli-color';
+import mavenDownload, {ArtifactDownload} from './maven-download'
 
 
 const doc = `
@@ -25,17 +25,25 @@ mavenDownload(
     args['<artifact>'],
     args['--destination'],
     args['--repository']
-).then(res => {
-    console.log(res.filename, labelOk(res.isOk), `(sha1=${res.sha1}, md5=${res.md5})`, `in ${res.elapsedMs}ms`);
-    return res;
+).then(resuls => {
+    const allOk = resuls.reduce((acc: boolean, res: ArtifactDownload) => {
+        console.log(res.filename, labelOk(res.isOk), `(sha1=${res.sha1}, md5=${res.md5})`, `in ${res.elapsedMs}ms`);
+        return acc && res.isOk;
+    }, true);
+    return allOk;
+}).then(allOk => {
+    if (!allOk) {
+        console.error(clc.red("Some file are incorect Hash"));
+        process.exit(1)
+    }
 }).catch(err => {
     console.error(err);
+    process.exit(1);
 });
 
-function labelOk(isOk:boolean): string {
-    return isOk ? clc.green("Ok"): clc.red('Ko');
+function labelOk(isOk: boolean): string {
+    return isOk ? clc.green("Ok") : clc.red('Ko');
 }
-
 
 
 // function checksumFile(algorithm, path) {
