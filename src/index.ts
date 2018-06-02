@@ -21,7 +21,7 @@ Examples:
  maven-id-resolver org.apache.commons:commons-lang3:3.4 -d dist
 `;
 const args = docopt(doc, {version: require('../package.json').version});
-
+const start = process.hrtime();
 mavenDownload(
     args['<artifact>'],
     args['--destination'],
@@ -35,20 +35,25 @@ mavenDownload(
             acc.bads.push(res);
         }
         return  {...acc,   allOk :  acc.allOk && res.isOk };
-    }, { allOk: true, bads: [] } );
+    }, { allOk: true, bads: [], artifacts:resuls } );
     return allOk;
-}).then(({allOk, bads}) => {
+}).then((res) => {
+    const {allOk, bads} =res;
     if (!allOk) {
-       const msgTitle =  `
+        const msgTitle = `
    ____                         _   __                ___    __             __         __
   / __/ ___  ____ __ __  ____  (_) / /_  __ __       / _ |  / / ___   ____ / /_       / /
  _\\ \\  / -_)/ __// // / / __/ / / / __/ / // /      / __ | / / / -_) / __// __/      /_/ 
 /___/  \\__/ \\__/ \\_,_/ /_/   /_/  \\__/  \\_, /      /_/ |_|/_/  \\__/ /_/   \\__/      (_)`;
-            console.error(clc.red(msgTitle));
-            process.exit(1);
-
-
+        console.error(clc.red(msgTitle));
+        process.exit(1);
     }
+    return res;
+}).then(res => {
+    const elapsed = process.hrtime(start)[1] / 1000000; // divide by a million to get nano to milli
+    const elapsedMs = elapsed.toFixed(0);
+    console.log("Download", res.artifacts.length, "files in ", elapsedMs,"ms");
+    return res;
 }).catch(err => {
     console.error(err);
     process.exit(1);
