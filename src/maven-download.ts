@@ -102,11 +102,7 @@ function renameToFinalName(result: ArtifactDownloadTmp): ArtifactDownload {
     const {destDir, filename} = res;
     if (result.isOk) {
         const destFile = destDir ? path.join(destDir, filename) : filename;
-        fs.unlink(destFile, err => {
-            if (err) {
-                console.log(`Could not delete ${destFile}`)
-            }
-        });
+        fs.unlink(destFile, err => { });
         fs.rename(destFileTmp, destFile, err => {
             if (err) {
                 const errDelMsg = `Could not rename to ${destFileTmp} to ${destFile}`;
