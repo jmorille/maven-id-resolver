@@ -2,12 +2,13 @@
 
 import {docopt} from 'docopt';
 import * as clc from 'cli-color';
+import * as asciify from 'asciify';
 import mavenDownload, {ArtifactDownload} from './maven-download'
 
 
 const doc = `
 Usage:
- mvn-dl <artifact> [options]
+ mvn-dl <artifact>... [options]
 Options:
  -d --destination <destination>  Destination folder 
  -r --repository <url>           Url to the maven repo
@@ -26,15 +27,27 @@ mavenDownload(
     args['--destination'],
     args['--repository']
 ).then(resuls => {
-    const allOk = resuls.reduce((acc: boolean, res: ArtifactDownload) => {
-        console.log(res.filename, labelOk(res.isOk), `(sha1=${res.sha1}, md5=${res.md5})`, `in ${res.elapsedMs}ms`);
-        return acc && res.isOk;
-    }, true);
+    const allOk = resuls.reduce((acc: any, res: ArtifactDownload) => {
+        const shaMsg = labelByError(`sha1=${res.sha1}`, res.sha1Ok);
+        const md5Msg = labelByError(`md5=${res.md5}`, res.md5Ok);
+        console.log(res.filename, labelOk(res.isOk), `sha1=${shaMsg}`, `md5=${md5Msg}`, `in ${res.elapsedMs}ms`);
+        if (!res.isOk) {
+            acc.bads.push(res);
+        }
+        return  {...acc,   allOk :  acc.allOk && res.isOk };
+    }, { allOk: true, bads: [] } );
     return allOk;
-}).then(allOk => {
+}).then(({allOk, bads}) => {
     if (!allOk) {
-        console.error(clc.red("Some file are incorect Hash"));
-        process.exit(1)
+       const msgTitle =  `
+   ____                         _   __                ___    __             __         __
+  / __/ ___  ____ __ __  ____  (_) / /_  __ __       / _ |  / / ___   ____ / /_       / /
+ _\\ \\  / -_)/ __// // / / __/ / / / __/ / // /      / __ | / / / -_) / __// __/      /_/ 
+/___/  \\__/ \\__/ \\_,_/ /_/   /_/  \\__/  \\_, /      /_/ |_|/_/  \\__/ /_/   \\__/      (_)`;
+            console.error(clc.red(msgTitle));
+            process.exit(1);
+
+
     }
 }).catch(err => {
     console.error(err);
@@ -42,17 +55,17 @@ mavenDownload(
 });
 
 function labelOk(isOk: boolean): string {
-    return isOk ? clc.green("Ok") : clc.red('Ko');
+    const msg = isOk? "Ok": 'Ko';
+    return labelByStatus(msg, isOk);
 }
 
 
-// function checksumFile(algorithm, path) {
-//     return new Promise((resolve, reject) =>
-//         fs.createReadStream(path)
-//             .on('error', reject)
-//             .pipe(crypto.createHash(algorithm).setEncoding('hex'))
-//             .once('finish', function () {
-//                 resolve(this.read())
-//             })
-//     )
-// }
+function labelByStatus(msg:string, isOk: boolean): string {
+    return isOk ? clc.green(msg) : clc.red(msg);
+}
+
+function labelByError(msg:string, isOk: boolean): string {
+    return isOk ? msg : clc.red(msg);
+}
+
+

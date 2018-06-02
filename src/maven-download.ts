@@ -22,8 +22,7 @@ interface ArtifactDownloadTmp extends ArtifactDownload{
     destFileTmp: string;
 }
 
-export default function downloadArtifacts(artifactId: string, destDir: string, repository: string): Promise<ArtifactDownload[]>{
-    const ids = [ artifactId];
+export default function downloadArtifacts(ids: string[], destDir: string, repository: string): Promise<ArtifactDownload[]>{
     const promises = ids.map(id => {
         return downloadArtifact(id, destDir, repository);
     });
@@ -48,11 +47,10 @@ export function downloadArtifact(artifactId: string, destDir?: string, repositor
     })
         .then(promises => Promise.all(promises as Promise<any>[]))
         .then(([resArtifact, sha1, md5]) => {
-            const sha1OK = resArtifact.sha1 === sha1;
+            const sha1Ok = resArtifact.sha1 === sha1;
             const md5Ok = resArtifact.md5 === md5;
-            const isOk = sha1OK && md5Ok;
-
-            return {...resArtifact, isOk, sha1OK, md5Ok, sha1Src: sha1, md5Src: md5};
+            const isOk = sha1Ok && md5Ok;
+            return {...resArtifact, isOk, sha1Ok, md5Ok, sha1Src: sha1, md5Src: md5};
         })
         .then(renameToFinalName)
         .then(res => {
