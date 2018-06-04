@@ -30,7 +30,8 @@ mavenDownload(
     const allOk = resuls.reduce((acc: any, res: ArtifactDownload) => {
         const shaMsg = labelByError(`${res.sha1}`, res.sha1Ok);
         const md5Msg = labelByError(`${res.md5}`, res.md5Ok);
-        console.log(res.filename, labelOk(res.isOk, res), `sha1=${shaMsg}`, `md5=${md5Msg}`, `in ${res.elapsedMs}ms`, res.url);
+        //console.log(res.url);
+        console.log(res.filename, labelOk(res.isOk, res), `sha1=${shaMsg}`, `md5=${md5Msg}`, `in ${res.elapsedMs}ms`);
         if (!res.isOk) {
             acc.bads.push(res);
         }
