@@ -58,7 +58,8 @@ export function downloadArtifact(artifactId: string, destDir?: string, repositor
         })
         .then(renameToFinalName)
         .then(res => {
-            const elapsed = process.hrtime(start)[1] / 1000000; // divide by a million to get nano to milli
+            const end = process.hrtime(start);
+            const elapsed = end[0]*1000 + end[1] / 1000000; // divide by a million to get nano to milli
             const elapsedMs = elapsed.toFixed(0);
             return {...res, elapsedMs}
         });

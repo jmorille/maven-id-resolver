@@ -23,7 +23,7 @@ Examples:
  maven-id-resolver org.apache.commons:commons-lang3:3.4 -d dest
 `;
 const args = docopt(doc, {version: require('../package.json').version});
-const startAll = process.hrtime();
+const hrstart = process.hrtime();
 mavenDownload(
     args['<artifact>'],
     args['--destination'],
@@ -54,9 +54,11 @@ mavenDownload(
     }
     return res;
 }).then(res => {
-    const elapsed = process.hrtime(startAll)[1] / 1000000; // divide by a million to get nano to milli
-    const elapsedMs = elapsed.toFixed(0);
-    console.log("Download", res.artifacts.length, "files in ", elapsedMs, "ms");
+    const hrend = process.hrtime(hrstart);
+    //const elapsed = process.hrtime(hrstart)[1] / 1000000; // divide by a million to get nano to milli
+    //const elapsedMs = elapsed.toFixed(0);
+    console.info("Execution time (hr): %ds %dms", hrend[0], (hrend[1]/1000000).toFixed(0));
+    //console.info("Download", res.artifacts.length, "files in ", elapsedMs, "ms");
     return res;
 }).catch(err => {
     console.error('-------------------------------------');
