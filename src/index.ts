@@ -28,17 +28,17 @@ mavenDownload(
     args['--repository']
 ).then(resuls => {
     const allOk = resuls.reduce((acc: any, res: ArtifactDownload) => {
-        const shaMsg = labelByError(`sha1=${res.sha1}`, res.sha1Ok);
-        const md5Msg = labelByError(`md5=${res.md5}`, res.md5Ok);
-        console.log(res.filename, labelOk(res.isOk), `sha1=${shaMsg}`, `md5=${md5Msg}`, `in ${res.elapsedMs}ms`);
+        const shaMsg = labelByError(`${res.sha1}`, res.sha1Ok);
+        const md5Msg = labelByError(`${res.md5}`, res.md5Ok);
+        console.log(res.filename, labelOk(res.isOk, res), `sha1=${shaMsg}`, `md5=${md5Msg}`, `in ${res.elapsedMs}ms`, res.url);
         if (!res.isOk) {
             acc.bads.push(res);
         }
-        return  {...acc,   allOk :  acc.allOk && res.isOk };
-    }, { allOk: true, bads: [], artifacts:resuls } );
+        return {...acc, allOk: acc.allOk && res.isOk};
+    }, {allOk: true, bads: [], artifacts: resuls});
     return allOk;
 }).then((res) => {
-    const {allOk, bads} =res;
+    const {allOk, bads} = res;
     if (!allOk) {
         const msgTitle = `
    ____                         _   __                ___    __             __         __
@@ -52,24 +52,25 @@ mavenDownload(
 }).then(res => {
     const elapsed = process.hrtime(start)[1] / 1000000; // divide by a million to get nano to milli
     const elapsedMs = elapsed.toFixed(0);
-    console.log("Download", res.artifacts.length, "files in ", elapsedMs,"ms");
+    console.log("Download", res.artifacts.length, "files in ", elapsedMs, "ms");
     return res;
 }).catch(err => {
+    console.error('-------------------------------------');
     console.error(err);
     process.exit(1);
 });
 
-function labelOk(isOk: boolean): string {
-    const msg = isOk? "Ok": 'Ko';
+function labelOk(isOk: boolean, res: ArtifactDownload): string {
+    const msg = isOk ? `Ok (${res.statusCode})` : `Ko (${res.statusCode}) `;
     return labelByStatus(msg, isOk);
 }
 
 
-function labelByStatus(msg:string, isOk: boolean): string {
+function labelByStatus(msg: string, isOk: boolean): string {
     return isOk ? clc.green(msg) : clc.red(msg);
 }
 
-function labelByError(msg:string, isOk: boolean): string {
+function labelByError(msg: string, isOk: boolean): string {
     return isOk ? msg : clc.red(msg);
 }
 

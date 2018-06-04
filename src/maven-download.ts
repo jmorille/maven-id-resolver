@@ -9,27 +9,31 @@ import fetch from "node-fetch";
 export interface ArtifactDownload {
     artifact: Artifact;
     destDir: string;
+    url?: string;
     filename: string;
     sha1: string;
     md5?: string;
     isOk?: boolean;
     sha1Ok?: boolean;
     md5Ok?: boolean;
+    sha1Src?: string;
+    md5Src?: string;
     elapsedMs?: string;
+    statusCode: number;
 }
 
-interface ArtifactDownloadTmp extends ArtifactDownload{
+interface ArtifactDownloadTmp extends ArtifactDownload {
     destFileTmp: string;
 }
 
-export default function downloadArtifacts(ids: string[], destDir: string, repository: string): Promise<ArtifactDownload[]>{
+export default function downloadArtifacts(ids: string[], destDir: string, repository: string): Promise<ArtifactDownload[]> {
     const promises = ids.map(id => {
         return downloadArtifact(id, destDir, repository);
     });
     return Promise.all(promises);
 }
 
-export function downloadArtifact(artifactId: string, destDir?: string, repository?: string, filename?: string): Promise<ArtifactDownload>{
+export function downloadArtifact(artifactId: string, destDir?: string, repository?: string, filename?: string): Promise<ArtifactDownload> {
     // Parameters
     const start = process.hrtime();
     const artifact = mavenParser(artifactId);
@@ -47,8 +51,8 @@ export function downloadArtifact(artifactId: string, destDir?: string, repositor
     })
         .then(promises => Promise.all(promises as Promise<any>[]))
         .then(([resArtifact, sha1, md5]) => {
-            const sha1Ok = resArtifact.sha1 === sha1;
-            const md5Ok = resArtifact.md5 === md5;
+            const sha1Ok = sha1 ? resArtifact.sha1 === sha1 : false;
+            const md5Ok = md5 ? resArtifact.md5 === md5 : false;
             const isOk = sha1Ok && md5Ok;
             return {...resArtifact, isOk, sha1Ok, md5Ok, sha1Src: sha1, md5Src: md5};
         })
@@ -62,7 +66,10 @@ export function downloadArtifact(artifactId: string, destDir?: string, repositor
 
 
 function fetchHash(artifactUrl: string, algo: string) {
-    return fetch(`${artifactUrl}.${algo}`).then(res => res.text())
+    return fetch(`${artifactUrl}.${algo}`)
+        .then(res => {
+            return res.ok ? res.text() : undefined;
+        });
 }
 
 function writeResponsePromise(artifact: Artifact, destDir: string) {
@@ -72,6 +79,13 @@ function writeResponsePromise(artifact: Artifact, destDir: string) {
         const filenameTmp = `${filename}-tmp`;
         const destFileTmp = destDir ? path.join(destDir, filenameTmp) : filenameTmp;
         //console.log(`Epected write  to file ${destFileTmp}`);
+        const statusCode = res.status;
+        if (!res.ok) {
+            return new Promise((resolve, reject) => {
+                resolve({artifact, destDir, filename, destFileTmp, sha1: undefined, md5: undefined, statusCode});
+            });
+        }
+
         return new Promise((resolve, reject) => {
             // Hasher
             const hash = crypto.createHash('sha1');
@@ -85,7 +99,7 @@ function writeResponsePromise(artifact: Artifact, destDir: string) {
             dest.on('finish', () => {
                 const sha1 = hash.digest('hex');
                 const md5 = hashMd5.digest('hex');
-                resolve({destDir, filename, sha1, md5, destFileTmp, artifact});
+                resolve({artifact, destDir, filename, destFileTmp, sha1, md5, statusCode});
             });
             res.body.pipe(dest);
             dest.on('error', err => {
@@ -102,7 +116,8 @@ function renameToFinalName(result: ArtifactDownloadTmp): ArtifactDownload {
     const {destDir, filename} = res;
     if (result.isOk) {
         const destFile = destDir ? path.join(destDir, filename) : filename;
-        fs.unlink(destFile, err => { });
+        fs.unlink(destFile, err => {
+        });
         fs.rename(destFileTmp, destFile, err => {
             if (err) {
                 const errDelMsg = `Could not rename to ${destFileTmp} to ${destFile}`;
@@ -115,7 +130,7 @@ function renameToFinalName(result: ArtifactDownloadTmp): ArtifactDownload {
     } else {
         fs.unlink(destFileTmp, err => {
             if (err) {
-                console.log(`Could not delete ${destFileTmp}`)
+                // console.log(`Could not delete ${destFileTmp}`)
             }
         });
     }
