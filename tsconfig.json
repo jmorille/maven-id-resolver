@@ -10,7 +10,7 @@
     "allowJs": false
   },
   "include": [
-    "src/**/*"
+    "src/**/*.ts"
   ],
   "exclude": [
     "node_modules", "lib"

@@ -1,10 +1,13 @@
 const path = require('path');
 
+const webpack = require('webpack');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+//
 
 module.exports = {
     entry: {
-        index: './src/index',
+        'cli': './src/cli',
+        'index': './src/index',
         'maven-download': './src/maven-download'
     },
     target: "node",
@@ -21,12 +24,14 @@ module.exports = {
                     transpileOnly: true
                 }
             },
+            { test: /\.jsx?$/,loader: 'shebang-loader', exclude: /node_modules/ },
         ]
     },
     resolve: {
         extensions: [".tsx", ".ts", ".js"]
     },
     plugins: [
+        new webpack.BannerPlugin({ banner: '#!/usr/bin/env node',  raw: true }),
         new ForkTsCheckerWebpackPlugin()
     ],
     optimization: {

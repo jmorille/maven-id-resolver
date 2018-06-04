@@ -1,8 +1,5 @@
-//#!/usr/bin/env node
-
 import {docopt} from 'docopt';
 import * as clc from 'cli-color';
-import * as asciify from 'asciify';
 import mavenDownload, {ArtifactDownload} from './maven-download'
 
 
