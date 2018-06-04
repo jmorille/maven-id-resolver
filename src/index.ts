@@ -13,15 +13,17 @@ Options:
  -d --destination <destination>  Destination folder 
  -r --repository <url>           Url to the maven repo
 Examples:
- # download jar
+ # download jar as format groupId:artifactId:packaging:classifier:version 
  maven-id-resolver org.apache.commons:commons-lang3:3.4
+ # download multi jar
+ maven-id-resolver com.google.guava:guava:25.1-jre com.google.guava:guava::sources:25.1-jre com.google.guava:guava:jar:javadoc:25.1-jre
  # download from other repository
  maven-id-resolver org.apache.commons:commons-lang3:3.4 -r http://nexus/repository/maven-releases
  # download jar to dist
- maven-id-resolver org.apache.commons:commons-lang3:3.4 -d dist
+ maven-id-resolver org.apache.commons:commons-lang3:3.4 -d dest
 `;
 const args = docopt(doc, {version: require('../package.json').version});
-const start = process.hrtime();
+const startAll = process.hrtime();
 mavenDownload(
     args['<artifact>'],
     args['--destination'],
@@ -30,7 +32,8 @@ mavenDownload(
     const allOk = resuls.reduce((acc: any, res: ArtifactDownload) => {
         const shaMsg = labelByError(`${res.sha1}`, res.sha1Ok);
         const md5Msg = labelByError(`${res.md5}`, res.md5Ok);
-        //console.log(res.url);
+        // console.log(res.url);
+        // console.log(res.artifact);
         console.log(res.filename, labelOk(res.isOk, res), `sha1=${shaMsg}`, `md5=${md5Msg}`, `in ${res.elapsedMs}ms`);
         if (!res.isOk) {
             acc.bads.push(res);
@@ -51,7 +54,7 @@ mavenDownload(
     }
     return res;
 }).then(res => {
-    const elapsed = process.hrtime(start)[1] / 1000000; // divide by a million to get nano to milli
+    const elapsed = process.hrtime(startAll)[1] / 1000000; // divide by a million to get nano to milli
     const elapsedMs = elapsed.toFixed(0);
     console.log("Download", res.artifacts.length, "files in ", elapsedMs, "ms");
     return res;
