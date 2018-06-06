@@ -1,4 +1,5 @@
 'use strict';
 import mavenDownload  from './maven-download'
 
-module.exports = mavenDownload;
+export * from './maven-download';
+//module.exports = mavenDownload;
