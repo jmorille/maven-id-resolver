@@ -7,6 +7,7 @@ const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 module.exports = {
     entry: {
         'cli': './src/cli',
+        'main': './src/main',
         'index': './src/index',
         'maven-download': './src/maven-download'
     },
