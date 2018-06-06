@@ -12,9 +12,11 @@ module.exports = {
         'maven-download': './src/maven-download'
     },
     target: "node",
+
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: '[name].js'
+        filename: '[name].js',
+        libraryTarget: 'commonjs2'
     },
     module: {
         rules: [
