@@ -3,7 +3,6 @@
 /src/config/dory.json
 
 # build
-/dist
 /build
 /dest
 
