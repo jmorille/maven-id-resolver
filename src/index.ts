@@ -1,3 +1,4 @@
-import mavenDownload, {ArtifactDownload} from './maven-download'
+'use strict';
+import mavenDownload  from './maven-download'
 
 export default mavenDownload;

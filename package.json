@@ -2,12 +2,12 @@
   "name": "maven-id-resolver",
   "version": "1.0.0",
   "description": "",
-  "main": "dist",
+  "main": "dist/index.js",
   "bin": {
     "maven-id-resolver": "./dist/cli.js"
   },
   "files": [
-    "dist",
+    "dist/**",
     "README.md"
   ],
   "scripts": {

@@ -1,3 +1,4 @@
+'use strict';
 import {docopt} from 'docopt';
 import * as clc from 'cli-color';
 import mavenDownload, {ArtifactDownload} from './maven-download'
