@@ -28,15 +28,16 @@ mavenDownload(
     args['--repository']
 ).then(resuls => {
     const allOk = resuls.reduce((acc: any, res: ArtifactDownload) => {
-        const shaMsg = labelByError(`${res.sha1}`, res.sha1Ok);
-        const md5Msg = labelByError(`${res.md5}`, res.md5Ok);
+        const {file} = res;
+        const shaMsg = labelByError(`${file.sha1}`, file.sha1Ok);
+        const md5Msg = labelByError(`${file.md5}`, file.md5Ok);
         // console.log(res.url);
         // console.log(res.artifact);
-        console.log(res.filename, labelOk(res.isOk, res), `sha1=${shaMsg}`, `md5=${md5Msg}`, `in ${res.elapsedMs}ms`);
-        if (!res.isOk) {
+        console.log(file.filename, labelOk(file.isOk, res), `sha1=${shaMsg}`, `md5=${md5Msg}`, `in ${res.elapsedMs}ms`);
+        if (!file.isOk) {
             acc.bads.push(res);
         }
-        return {...acc, allOk: acc.allOk && res.isOk};
+        return {...acc, allOk: acc.allOk && file.isOk};
     }, {allOk: true, bads: [], artifacts: resuls});
     return allOk;
 }).then((res) => {
@@ -65,7 +66,7 @@ mavenDownload(
 });
 
 function labelOk(isOk: boolean, res: ArtifactDownload): string {
-    const msg = isOk ? `Ok (${res.statusCode})` : `Ko (${res.statusCode}) `;
+    const msg = isOk ? `Ok (${res.file.statusCode})` : `Ko (${res.file.statusCode}) `;
     return labelByStatus(msg, isOk);
 }
 
