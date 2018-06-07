@@ -6,6 +6,7 @@ import mavenParser, {Artifact} from "mvn-artifact-name-parser";
 import mavenUrl from "mvn-artifact-url";
 import mavenFileName from "mvn-artifact-filename";
 import fetch, {Response} from "node-fetch";
+import {access} from "fs";
 
 export interface ArtifactInfo {
     mavenId: string;
@@ -16,6 +17,7 @@ export interface ArtifactInfo {
 export interface ArtifactDownloadFile extends ArtifactInfo {
     file: ArtifactFile;
 }
+
 export interface ArtifactDownload extends ArtifactDownloadFile {
     file: ArtifactFile;
     elapsedMs: number;
@@ -44,15 +46,33 @@ interface ArtifactFileTemp extends ArtifactFileInfo {
 interface ArtifactFileVerify extends ArtifactFileTemp, ArtifactFileInfoHash {
 }
 
-interface ArtifactFile extends ArtifactFileInfo, ArtifactFileInfoHash {
+export interface ArtifactFile extends ArtifactFileInfo, ArtifactFileInfoHash {
 }
 
+interface MultiArtifactDownload {
+    artifacts: ArtifactDownload[];
+    isOk: boolean;
+    elapseTime: string;
+}
 
-export default function downloadArtifacts(ids: string[], destDir: string, repository: string): Promise<ArtifactDownload[]> {
-    const promises = ids.map(id => {
+export default function downloadArtifacts(ids: string[], destDir: string, repository: string): Promise<MultiArtifactDownload> {
+    const hrstart = process.hrtime();
+    // Prepare All dOwnload
+    const promises:Promise<ArtifactDownload>[] = ids.map(id => {
         return downloadArtifact(id, destDir, repository);
     });
-    return Promise.all(promises);
+    return Promise.all(promises)
+        .then(artifacts=> {
+            const isOk =artifacts.reduce( (acc:boolean, arti:ArtifactDownloadFile) => {
+                return acc && arti.file.isOk
+            }, true );
+            return {artifacts, isOk};
+        })
+        .then(res => {
+        const diff = process.hrtime(hrstart);
+        const elapseTime = `${diff[0]}s ${Math.floor(diff[1] / 1000000)}ms`;
+        return {...res,elapseTime};
+    });
 }
 
 export function downloadArtifact(mavenId: string, destDir?: string, repository?: string): Promise<ArtifactDownload> {
@@ -158,23 +178,23 @@ function renameToFinalName(result: ArtifactFileVerify): ArtifactFile {
     const {destDir, filename} = res;
     if (result.isOk) {
         const destFile = destDir ? path.join(destDir, filename) : filename;
-        fs.unlink(destFile, err => {
-        });
+        fs.unlink(destFile, ignoreError);
         fs.rename(destFileTmp, destFile, err => {
             if (err) {
                 const errDelMsg = `Could not rename to ${destFileTmp} to ${destFile}`;
                 console.error(errDelMsg);
-                fs.unlink(destFileTmp, err2 => {
-                });
+                fs.unlink(destFileTmp, ignoreError);
                 throw err
             }
         });
     } else {
-        fs.unlink(destFileTmp, err => {
-            if (err) {
-                // console.log(`Could not delete ${destFileTmp}`)
-            }
-        });
+        fs.unlink(destFileTmp, ignoreError);
     }
     return res;
+}
+
+function ignoreError(err: Error) {
+    if (err) {
+        // Ignore Error
+    }
 }

@@ -26,44 +26,41 @@ mavenDownload(
     args['<artifact>'],
     args['--destination'],
     args['--repository']
-).then(resuls => {
-    const allOk = resuls.reduce((acc: any, res: ArtifactDownload) => {
-        const {file} = res;
+).then(res => {
+    // Print Download Files
+    res.artifacts.forEach(artifact => {
+        const file = artifact.file;
         const shaMsg = labelByError(`${file.sha1}`, file.sha1Ok);
         const md5Msg = labelByError(`${file.md5}`, file.md5Ok);
         // console.log(res.url);
         // console.log(res.artifact);
-        console.log(file.filename, labelOk(file.isOk, res), `sha1=${shaMsg}`, `md5=${md5Msg}`, `in ${res.elapsedMs}ms`);
-        if (!file.isOk) {
-            acc.bads.push(res);
-        }
-        return {...acc, allOk: acc.allOk && file.isOk};
-    }, {allOk: true, bads: [], artifacts: resuls});
-    return allOk;
-}).then((res) => {
-    const {allOk, bads} = res;
-    if (!allOk) {
-        const msgTitle = `
+        console.log(file.filename, labelOk(file.isOk, artifact), `sha1=${shaMsg}`, `md5=${md5Msg}`, `in ${artifact.elapsedMs}ms`);
+    });
+    // Print Status
+    if (res.isOk) {
+        console.info("All files downloaded",clc.green( "SuccessFull"),"in", res.elapseTime);
+    } else {
+        console.error(clc.red(getTextSecurityAlert()));
+        process.exit(1);
+    }
+    return res;
+}).catch(err => {
+    console.error(clc.red(`
+-------------------------------------------------- 
+-------------     ERROR             -------------- 
+--------------------------------------------------`));
+    process.exit(1);
+});
+
+
+function getTextSecurityAlert() {
+    return  `
    ____                         _   __                ___    __             __         __
   / __/ ___  ____ __ __  ____  (_) / /_  __ __       / _ |  / / ___   ____ / /_       / /
  _\\ \\  / -_)/ __// // / / __/ / / / __/ / // /      / __ | / / / -_) / __// __/      /_/ 
 /___/  \\__/ \\__/ \\_,_/ /_/   /_/  \\__/  \\_, /      /_/ |_|/_/  \\__/ /_/   \\__/      (_)`;
-        console.error(clc.red(msgTitle));
-        process.exit(1);
-    }
-    return res;
-}).then(res => {
-    const hrend = process.hrtime(hrstart);
-    //const elapsed = process.hrtime(hrstart)[1] / 1000000; // divide by a million to get nano to milli
-    //const elapsedMs = elapsed.toFixed(0);
-    console.info("Execution time (hr): %ds %dms", hrend[0], (hrend[1]/1000000).toFixed(0));
-    //console.info("Download", res.artifacts.length, "files in ", elapsedMs, "ms");
-    return res;
-}).catch(err => {
-    console.error('-------------------------------------');
-    console.error(err);
-    process.exit(1);
-});
+
+}
 
 function labelOk(isOk: boolean, res: ArtifactDownload): string {
     const msg = isOk ? `Ok (${res.file.statusCode})` : `Ko (${res.file.statusCode}) `;
