@@ -5,6 +5,7 @@
 
 # project
 /dist
+/build
 
 # Run
 /dest
