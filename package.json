@@ -19,7 +19,7 @@
     "sec:check": "nsp check --reporter checkstyle",
     "build:watch": "webpack --mode=development --watch",
     "build": "webpack --mode=development",
-    "dist": "webpack --mode=production  --progress --output-path=./ "
+    "dist": "webpack --mode=production  --progress"
   },
   "author": "",
   "license": "ISC",
