@@ -1,6 +1,6 @@
 {
   "name": "maven-id-resolver",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "",
   "main": "dist/index.js",
   "bin": {
@@ -11,15 +11,15 @@
     "README.md"
   ],
   "scripts": {
-    "clean" : "rm -f *.js *.jar",
-    "version": "npm run build  --progress --output-path=./ && git add -A dist",
+    "clean": "rm -f *.js *.jar",
+    "version": "npm run build && git add -A dist",
     "postversion": "git push && git push --tags && npm run clean",
     "dev": "npm-run-all --parallel watch:build test",
     "test": "sec:check",
     "sec:check": "nsp check --reporter checkstyle",
     "build:watch": "webpack --mode=development --watch",
     "build": "webpack --mode=development",
-    "dist": "webpack --mode=production"
+    "dist": "webpack --mode=production  --progress --output-path=./ "
   },
   "author": "",
   "license": "ISC",
