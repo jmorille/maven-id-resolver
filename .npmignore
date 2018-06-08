@@ -3,5 +3,8 @@
 /tsconfig.json
 /eslintrc.yaml
 
+# project
+/dist
+
 # Run
 /dest

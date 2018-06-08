@@ -11,14 +11,15 @@
     "README.md"
   ],
   "scripts": {
-    "version": "npm run build && git add -A dist",
-    "postversion": "git push && git push --tags",
+    "clean" : "rm -f *.js *.jar",
+    "version": "npm run build  --progress --output-path=./ && git add -A dist",
+    "postversion": "git push && git push --tags && npm run clean",
     "dev": "npm-run-all --parallel watch:build test",
     "test": "sec:check",
     "sec:check": "nsp check --reporter checkstyle",
     "build:watch": "webpack --mode=development --watch",
     "build": "webpack --mode=development",
-    "dist": "webpack --mode=production  --progress "
+    "dist": "webpack --mode=production"
   },
   "author": "",
   "license": "ISC",
