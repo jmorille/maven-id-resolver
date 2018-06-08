@@ -96,6 +96,13 @@ export function parseMavenId(mavenId: string, repository?: string): Promise<Arti
     });
 }
 
+export function randomValueHex (len:number): string {
+    return crypto.randomBytes(Math.ceil(len/2))
+        .toString('hex') // convert to hexadecimal format
+        .slice(0,len);   // return required number of characters
+}
+
+
 export function downloadArtifactWithHash(destDir: string) {
     return function (artifactInfo: ArtifactInfo): Promise<ArtifactDownloadFile> {
         const {url, artifact} = artifactInfo;
@@ -126,8 +133,11 @@ function fetchArtifact(artifactUrl: string, destDir: string, filename: string): 
             });
         }
         // Response Download
-        const filenameTmp = `${filename}-tmp`;
+        const ramdom = randomValueHex(16);
+        const filenameTmp = `${filename}.${ramdom}.tmp`;
         const destFileTmp = destDir ? path.join(destDir, filenameTmp) : filenameTmp;
+       // console.log(destFileTmp)
+
         return new Promise((resolve, reject) => {
             // Hasher
             const hash = crypto.createHash('sha1');

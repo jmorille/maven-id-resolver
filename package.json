@@ -11,6 +11,8 @@
     "README.md"
   ],
   "scripts": {
+    "version": "npm run build && git add -A dist",
+    "postversion": "git push && git push --tags",
     "dev": "npm-run-all --parallel watch:build test",
     "test": "sec:check",
     "sec:check": "nsp check --reporter checkstyle",
