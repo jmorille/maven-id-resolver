@@ -1,8 +1,8 @@
 # maven-id-resolver
 
 ## Release a version
-```
-npm run version patch
+```bash
+$ npm version patch
 ```
 
 ## Quick starter Kit
