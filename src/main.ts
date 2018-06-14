@@ -45,7 +45,7 @@ mavenDownload(
         console.log(file.filename, labelOk(file.isOk, artifact), `sha1=${shaMsg}`, `md5=${md5Msg}`, `in ${artifact.elapsedMs}ms`);
     });
     // Print Status
-
+    //console.log(JSON.stringify(res, null, 2));
     if (res.isOk) {
         console.info("All files downloaded", clc.green("SuccessFull"), "in", res.elapseTime);
     } else {

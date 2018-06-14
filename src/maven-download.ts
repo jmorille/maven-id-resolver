@@ -50,6 +50,11 @@ interface ArtifactFileVerify extends ArtifactFileTemp, ArtifactFileInfoHash {
 export interface ArtifactFile extends ArtifactFileInfo, ArtifactFileInfoHash {
 }
 
+export interface ArtifactHashDownload {
+    md5?:string;
+    sha1?:string;
+}
+
 interface MultiArtifactDownload {
     artifacts: ArtifactDownload[];
     isOk: boolean;
@@ -109,7 +114,7 @@ export function downloadArtifactWithHash(destDir: string, {writeHash, writeHashU
         const {url, artifact} = artifactInfo;
         const filename = mavenFileName(artifact);
         const opt = {url, destDir, filename};
-        const promises: [Promise<ArtifactFileTemp>, Promise<string>, Promise<string>] = [
+        const promises: [Promise<ArtifactFileTemp>, Promise<ArtifactHashDownload>, Promise<ArtifactHashDownload>] = [
             fetchArtifact(opt),
             fetchArtifactHash({...opt, algo: 'sha1', writeHash, writeHashUrl}),
             fetchArtifactHash({...opt, algo: 'md5', writeHash, writeHashUrl})
@@ -168,7 +173,7 @@ function fetchArtifact({url, destDir, filename}: { url: string, destDir?: string
 }
 
 
-export function fetchArtifactHash({url, algo, destDir, filename, writeHash, writeHashUrl}: { url: string, algo: string, destDir?: string, filename?: string, writeHash?: boolean, writeHashUrl?: boolean }): Promise<string> {
+export function fetchArtifactHash({url, algo, destDir, filename, writeHash, writeHashUrl}: { url: string, algo: string, destDir?: string, filename?: string, writeHash?: boolean, writeHashUrl?: boolean }): Promise<ArtifactHashDownload> {
     // Config
     const fsWriteFile = util.promisify(fs.writeFile);
     const hashUrl = `${url}.${algo}`;
@@ -194,15 +199,18 @@ export function fetchArtifactHash({url, algo, destDir, filename, writeHash, writ
                 });
             }
             return hash;
+        }).then(hash => {
+            return { [algo]: hash}
         });
 }
 
 
-export function verifyArtifactHash([fileInfo, sha1, md5]: [ArtifactFileTemp, string, string]): ArtifactFileVerify {
-    const sha1Ok = sha1 ? fileInfo.sha1 === sha1 : false;
-    const md5Ok = md5 ? fileInfo.md5 === md5 : false;
+export function verifyArtifactHash([fileInfo, sha1, md5]: [ArtifactFileTemp, ArtifactHashDownload, ArtifactHashDownload]): ArtifactFileVerify {
+    const hash = {...sha1, ...md5};
+    const sha1Ok = hash.sha1 ? fileInfo.sha1 === hash.sha1 : false;
+    const md5Ok = hash.md5 ? fileInfo.md5 === hash.md5 : false;
     const isOk = sha1Ok && md5Ok;
-    return {...fileInfo, sha1Ok, md5Ok, sha1Src: sha1, md5Src: md5, isOk}
+    return {...fileInfo, sha1Ok, md5Ok, sha1Src: hash.sha1, md5Src: hash.md5, isOk}
 }
 
 
