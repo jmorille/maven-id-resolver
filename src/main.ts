@@ -31,8 +31,8 @@ mavenDownload(
     args['--destination'],
     args['--repository'],
     {
-        writeHash:args['--hash-file'],
-        writeHashUrl:args['--hash-url']
+        writeHash: args['--hash-file'],
+        writeHashUrl: args['--hash-url']
     }
 ).then(res => {
     // Print Download Files
@@ -47,7 +47,7 @@ mavenDownload(
     // Print Status
 
     if (res.isOk) {
-        console.info("All files downloaded",clc.green( "SuccessFull"),"in", res.elapseTime);
+        console.info("All files downloaded", clc.green("SuccessFull"), "in", res.elapseTime);
     } else {
         console.error(clc.red(getTextSecurityAlert()));
         process.exit(1);
@@ -63,7 +63,7 @@ mavenDownload(
 
 
 function getTextSecurityAlert() {
-    return  `
+    return `
    ____                         _   __                ___    __             __         __
   / __/ ___  ____ __ __  ____  (_) / /_  __ __       / _ |  / / ___   ____ / /_       / /
  _\\ \\  / -_)/ __// // / / __/ / / / __/ / // /      / __ | / / / -_) / __// __/      /_/ 

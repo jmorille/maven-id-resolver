@@ -57,11 +57,11 @@ interface MultiArtifactDownload {
     elapseTime: string;
 }
 
-export default function downloadArtifacts(ids: string[], destDir: string, repository: string, opt?: {writeHash?: boolean, writeHashUrl?: boolean} ): Promise<MultiArtifactDownload> {
+export default function downloadArtifacts(ids: string[], destDir: string, repository: string, opt?: { writeHash?: boolean, writeHashUrl?: boolean }): Promise<MultiArtifactDownload> {
     const hrstart = process.hrtime();
     // Prepare All dOwnload
     const promises: Promise<ArtifactDownload>[] = ids.map(id => {
-        return downloadArtifact(id, destDir, repository,opt);
+        return downloadArtifact(id, destDir, repository, opt);
     });
     return Promise.all(promises)
         .then(artifacts => {
@@ -77,7 +77,7 @@ export default function downloadArtifacts(ids: string[], destDir: string, reposi
         });
 }
 
-export function downloadArtifact(mavenId: string, destDir?: string, repository?: string, opt?:{writeHash?: boolean, writeHashUrl?: boolean}): Promise<ArtifactDownload> {
+export function downloadArtifact(mavenId: string, destDir?: string, repository?: string, opt?: { writeHash?: boolean, writeHashUrl?: boolean }): Promise<ArtifactDownload> {
     const start = process.hrtime();
     return parseMavenId(mavenId, repository)
         .then(downloadArtifactWithHash(destDir, opt))
@@ -105,7 +105,7 @@ export function randomValueHex(len: number): string {
 }
 
 
-export function downloadArtifactWithHash(destDir: string, {writeHash,writeHashUrl } : {writeHash?: boolean, writeHashUrl?: boolean}) {
+export function downloadArtifactWithHash(destDir: string, {writeHash, writeHashUrl}: { writeHash?: boolean, writeHashUrl?: boolean }) {
     return function (artifactInfo: ArtifactInfo): Promise<ArtifactDownloadFile> {
         const {url, artifact} = artifactInfo;
         const filename = mavenFileName(artifact);
