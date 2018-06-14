@@ -7,8 +7,7 @@ import mavenParser, {Artifact} from "mvn-artifact-name-parser";
 import mavenUrl from "mvn-artifact-url";
 import mavenFileName from "mvn-artifact-filename";
 import fetch, {Response} from "node-fetch";
-import {access} from "fs";
-import {createContext} from "vm";
+
 
 export interface ArtifactInfo {
     mavenId: string;
@@ -68,7 +67,7 @@ export default function downloadArtifacts(ids: string[], destDir: string, reposi
             const isOk = artifacts.reduce((acc: boolean, arti: ArtifactDownloadFile) => {
                 return acc && arti.file.isOk
             }, true);
-            return {artifacts, isOk};
+            return {artifacts, isOk, coucou:'cou'};
         })
         .then(res => {
             const diff = process.hrtime(hrstart);
