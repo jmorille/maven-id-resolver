@@ -10,6 +10,8 @@ Usage:
 Options:
  -d --destination <destination>  Destination folder 
  -r --repository <url>           Url to the maven repo
+ --hash-file                     Write the Hash in a file postfix by algo
+ --hash-url                      Write the Hash Url
 Examples:
  # download jar as format groupId:artifactId:packaging:classifier:version 
  maven-id-resolver org.apache.commons:commons-lang3:3.4
@@ -19,13 +21,19 @@ Examples:
  maven-id-resolver org.apache.commons:commons-lang3:3.4 -r http://nexus/repository/maven-releases
  # download jar to dist
  maven-id-resolver org.apache.commons:commons-lang3:3.4 -d dest
+ # download jar to dist with hash infos
+ maven-id-resolver org.apache.commons:commons-lang3:3.4 --hash-file --hash-url -d dest 
 `;
 const args = docopt(doc, {version: require('../package.json').version});
 const hrstart = process.hrtime();
 mavenDownload(
     args['<artifact>'],
     args['--destination'],
-    args['--repository']
+    args['--repository'],
+    {
+        writeHash:args['--hash-file'],
+        writeHashUrl:args['--hash-url']
+    }
 ).then(res => {
     // Print Download Files
     res.artifacts.forEach(artifact => {

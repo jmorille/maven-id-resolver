@@ -2,11 +2,13 @@
 import * as crypto from "crypto";
 import * as fs from "fs";
 import * as path from "path";
+import * as util from 'util';
 import mavenParser, {Artifact} from "mvn-artifact-name-parser";
 import mavenUrl from "mvn-artifact-url";
 import mavenFileName from "mvn-artifact-filename";
 import fetch, {Response} from "node-fetch";
 import {access} from "fs";
+import {createContext} from "vm";
 
 export interface ArtifactInfo {
     mavenId: string;
@@ -55,30 +57,30 @@ interface MultiArtifactDownload {
     elapseTime: string;
 }
 
-export default function downloadArtifacts(ids: string[], destDir: string, repository: string): Promise<MultiArtifactDownload> {
+export default function downloadArtifacts(ids: string[], destDir: string, repository: string, opt?: {writeHash?: boolean, writeHashUrl?: boolean} ): Promise<MultiArtifactDownload> {
     const hrstart = process.hrtime();
     // Prepare All dOwnload
-    const promises:Promise<ArtifactDownload>[] = ids.map(id => {
-        return downloadArtifact(id, destDir, repository);
+    const promises: Promise<ArtifactDownload>[] = ids.map(id => {
+        return downloadArtifact(id, destDir, repository,opt);
     });
     return Promise.all(promises)
-        .then(artifacts=> {
-            const isOk =artifacts.reduce( (acc:boolean, arti:ArtifactDownloadFile) => {
+        .then(artifacts => {
+            const isOk = artifacts.reduce((acc: boolean, arti: ArtifactDownloadFile) => {
                 return acc && arti.file.isOk
-            }, true );
+            }, true);
             return {artifacts, isOk};
         })
         .then(res => {
-        const diff = process.hrtime(hrstart);
-        const elapseTime = `${diff[0]}s ${Math.floor(diff[1] / 1000000)}ms`;
-        return {...res,elapseTime};
-    });
+            const diff = process.hrtime(hrstart);
+            const elapseTime = `${diff[0]}s ${Math.floor(diff[1] / 1000000)}ms`;
+            return {...res, elapseTime};
+        });
 }
 
-export function downloadArtifact(mavenId: string, destDir?: string, repository?: string): Promise<ArtifactDownload> {
+export function downloadArtifact(mavenId: string, destDir?: string, repository?: string, opt?:{writeHash?: boolean, writeHashUrl?: boolean}): Promise<ArtifactDownload> {
     const start = process.hrtime();
     return parseMavenId(mavenId, repository)
-        .then(downloadArtifactWithHash(destDir))
+        .then(downloadArtifactWithHash(destDir, opt))
         .then(res => {
             const end = process.hrtime(start);
             const elapsed = end[0] * 1000 + end[1] / 1000000; // divide by a million to get nano to milli
@@ -96,21 +98,22 @@ export function parseMavenId(mavenId: string, repository?: string): Promise<Arti
     });
 }
 
-export function randomValueHex (len:number): string {
-    return crypto.randomBytes(Math.ceil(len/2))
+export function randomValueHex(len: number): string {
+    return crypto.randomBytes(Math.ceil(len / 2))
         .toString('hex') // convert to hexadecimal format
-        .slice(0,len);   // return required number of characters
+        .slice(0, len);   // return required number of characters
 }
 
 
-export function downloadArtifactWithHash(destDir: string) {
+export function downloadArtifactWithHash(destDir: string, {writeHash,writeHashUrl } : {writeHash?: boolean, writeHashUrl?: boolean}) {
     return function (artifactInfo: ArtifactInfo): Promise<ArtifactDownloadFile> {
         const {url, artifact} = artifactInfo;
         const filename = mavenFileName(artifact);
+        const opt = {url, destDir, filename};
         const promises: [Promise<ArtifactFileTemp>, Promise<string>, Promise<string>] = [
-            fetchArtifact(url, destDir, filename),
-            fetchArtifactHash(url, 'sha1'),
-            fetchArtifactHash(url, 'md5')
+            fetchArtifact(opt),
+            fetchArtifactHash({...opt, algo: 'sha1', writeHash, writeHashUrl}),
+            fetchArtifactHash({...opt, algo: 'md5', writeHash, writeHashUrl})
         ];
         return Promise.all(promises)
             .then(verifyArtifactHash)
@@ -122,8 +125,8 @@ export function downloadArtifactWithHash(destDir: string) {
 }
 
 
-function fetchArtifact(artifactUrl: string, destDir: string, filename: string): Promise<ArtifactFileTemp> {
-    return fetch(artifactUrl).then((res: Response): Promise<ArtifactFileTemp> => {
+function fetchArtifact({url, destDir, filename}: { url: string, destDir?: string, filename: string }): Promise<ArtifactFileTemp> {
+    return fetch(url).then((res: Response): Promise<ArtifactFileTemp> => {
         // Response
         const statusCode = res.status;
         // Response KO
@@ -136,7 +139,7 @@ function fetchArtifact(artifactUrl: string, destDir: string, filename: string): 
         const ramdom = randomValueHex(16);
         const filenameTmp = `${filename}.${ramdom}.tmp`;
         const destFileTmp = destDir ? path.join(destDir, filenameTmp) : filenameTmp;
-       // console.log(destFileTmp)
+        // console.log(destFileTmp)
 
         return new Promise((resolve, reject) => {
             // Hasher
@@ -166,10 +169,32 @@ function fetchArtifact(artifactUrl: string, destDir: string, filename: string): 
 }
 
 
-export function fetchArtifactHash(artifactUrl: string, algo: string): Promise<string> {
-    return fetch(`${artifactUrl}.${algo}`)
+export function fetchArtifactHash({url, algo, destDir, filename, writeHash, writeHashUrl}: { url: string, algo: string, destDir?: string, filename?: string, writeHash?: boolean, writeHashUrl?: boolean }): Promise<string> {
+    // Config
+    const fsWriteFile = util.promisify(fs.writeFile);
+    const hashUrl = `${url}.${algo}`;
+    // Fetch
+    return fetch(hashUrl)
         .then(res => {
             return res.ok ? res.text() : undefined;
+        }).then(hash => {
+            if (writeHash && hash && filename) {
+                const hashFilename = `${filename}.${algo}`;
+                const destFile = destDir ? path.join(destDir, hashFilename) : hashFilename;
+                return fsWriteFile(destFile, hash).then(() => {
+                    return hash;
+                });
+            }
+            return hash;
+        }).then(hash => {
+            if (writeHashUrl && hash && filename) {
+                const hashFilename = `${filename}.${algo}.url`;
+                const destFile = destDir ? path.join(destDir, hashFilename) : hashFilename;
+                return fsWriteFile(destFile, hashUrl).then(() => {
+                    return hash;
+                });
+            }
+            return hash;
         });
 }
 
