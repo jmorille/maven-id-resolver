@@ -6,6 +6,9 @@
 /dest
 
 # Run
+/*.url
+/*.md5
+/*.sha1
 /*.jar
 /*.war
 
