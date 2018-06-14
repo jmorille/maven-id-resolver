@@ -67,7 +67,7 @@ export default function downloadArtifacts(ids: string[], destDir: string, reposi
             const isOk = artifacts.reduce((acc: boolean, arti: ArtifactDownloadFile) => {
                 return acc && arti.file.isOk
             }, true);
-            return {artifacts, isOk, coucou:'cou'};
+            return {artifacts, isOk};
         })
         .then(res => {
             const diff = process.hrtime(hrstart);
