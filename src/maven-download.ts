@@ -114,10 +114,13 @@ export function downloadArtifactWithHash(destDir: string, {writeHash, writeHashU
         const {url, artifact} = artifactInfo;
         const filename = mavenFileName(artifact);
         const opt = {url, destDir, filename};
-        const promises: [Promise<ArtifactFileTemp>, Promise<ArtifactHashDownload>, Promise<ArtifactHashDownload>] = [
+        const algoPromises:Promise<ArtifactHashDownload>[] = ['sha1', 'md5'].map(algo =>{
+            return fetchArtifactHash({...opt, algo, writeHash, writeHashUrl})
+        });
+        const promises: [Promise<ArtifactFileTemp>, Promise<ArtifactHashDownload>, Promise<ArtifactHashDownload> ] = [
             fetchArtifact(opt),
-            fetchArtifactHash({...opt, algo: 'sha1', writeHash, writeHashUrl}),
-            fetchArtifactHash({...opt, algo: 'md5', writeHash, writeHashUrl})
+            algoPromises[0],
+            algoPromises[1]
         ];
         return Promise.all(promises)
             .then(verifyArtifactHash)
@@ -205,8 +208,8 @@ export function fetchArtifactHash({url, algo, destDir, filename, writeHash, writ
 }
 
 
-export function verifyArtifactHash([fileInfo, sha1, md5]: [ArtifactFileTemp, ArtifactHashDownload, ArtifactHashDownload]): ArtifactFileVerify {
-    const hash = {...sha1, ...md5};
+export function verifyArtifactHash([fileInfo, hash1, hash2]: [ArtifactFileTemp, ArtifactHashDownload, ArtifactHashDownload]): ArtifactFileVerify {
+    const hash = {...hash1, ...hash2};
     const sha1Ok = hash.sha1 ? fileInfo.sha1 === hash.sha1 : false;
     const md5Ok = hash.md5 ? fileInfo.md5 === hash.md5 : false;
     const isOk = sha1Ok && md5Ok;
