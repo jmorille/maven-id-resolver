@@ -55,7 +55,7 @@ export interface ArtifactHashDownload {
     sha1?:string;
 }
 
-interface MultiArtifactDownload {
+export interface MultiArtifactDownload {
     artifacts: ArtifactDownload[];
     isOk: boolean;
     elapseTime: string;
