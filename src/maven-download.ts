@@ -24,7 +24,7 @@ export interface ArtifactDownload extends ArtifactDownloadFile {
     elapsedMs: number;
 }
 
-interface ArtifactFileInfo {
+export interface ArtifactFileInfo {
     statusCode: number;
     destDir: string;
     filename: string;
@@ -32,7 +32,7 @@ interface ArtifactFileInfo {
     md5: string;
 }
 
-interface ArtifactFileInfoHash {
+export interface ArtifactFileInfoHash {
     sha1Src: string;
     md5Src: string;
     isOk: boolean;
@@ -40,11 +40,11 @@ interface ArtifactFileInfoHash {
     md5Ok: boolean;
 }
 
-interface ArtifactFileTemp extends ArtifactFileInfo {
+export interface ArtifactFileTemp extends ArtifactFileInfo {
     destFileTmp?: string;
 }
 
-interface ArtifactFileVerify extends ArtifactFileTemp, ArtifactFileInfoHash {
+export interface ArtifactFileVerify extends ArtifactFileTemp, ArtifactFileInfoHash {
 }
 
 export interface ArtifactFile extends ArtifactFileInfo, ArtifactFileInfoHash {
@@ -63,21 +63,20 @@ export interface MultiArtifactDownload {
 
 export default function downloadArtifacts(ids: string[], destDir: string, repository: string, opt?: { writeHash?: boolean, writeHashUrl?: boolean }): Promise<MultiArtifactDownload> {
     const hrstart = process.hrtime();
-    // Prepare All dOwnload
+    // Prepare All download
     const promises: Promise<ArtifactDownload>[] = ids.map(id => {
         return downloadArtifact(id, destDir, repository, opt);
     });
-    return Promise.all(promises)
-        .then(artifacts => {
+    return Promise.all(promises).then(artifacts => {
             const isOk = artifacts.reduce((acc: boolean, arti: ArtifactDownloadFile) => {
                 return acc && arti.file.isOk
             }, true);
             return {artifacts, isOk};
-        })
-        .then(res => {
+        }).then(res => {
             const diff = process.hrtime(hrstart);
             const elapseTime = `${diff[0]}s ${Math.floor(diff[1] / 1000000)}ms`;
-            return {...res, elapseTime};
+            const result:MultiArtifactDownload =  {...res, elapseTime};
+            return result;
         });
 }
 
@@ -132,7 +131,7 @@ export function downloadArtifactWithHash(destDir: string, {writeHash, writeHashU
 }
 
 
-function fetchArtifact({url, destDir, filename}: { url: string, destDir?: string, filename: string }): Promise<ArtifactFileTemp> {
+export function fetchArtifact({url, destDir, filename}: { url: string, destDir?: string, filename: string }): Promise<ArtifactFileTemp> {
     return fetch(url).then((res: Response): Promise<ArtifactFileTemp> => {
         // Response
         const statusCode = res.status;

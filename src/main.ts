@@ -1,7 +1,7 @@
 'use strict';
 import {docopt} from 'docopt';
 import * as clc from 'cli-color';
-import mavenDownload, {ArtifactDownload} from './maven-download'
+import downloadArtifacts, {  MultiArtifactDownload, ArtifactDownload} from './maven-download';
 
 
 const doc = `
@@ -25,8 +25,8 @@ Examples:
  maven-id-resolver org.apache.commons:commons-lang3:3.4 --hash-file --hash-url -d dest 
 `;
 const args = docopt(doc, {version: require('../package.json').version});
-const hrstart = process.hrtime();
-mavenDownload(
+//const hrstart = process.hrtime();
+downloadArtifacts(
     args['<artifact>'],
     args['--destination'],
     args['--repository'],
@@ -34,9 +34,10 @@ mavenDownload(
         writeHash: args['--hash-file'],
         writeHashUrl: args['--hash-url']
     }
-).then(res => {
+).then( (response:MultiArtifactDownload) => {
+    const data = response;
     // Print Download Files
-    res.artifacts.forEach(artifact => {
+    data.artifacts.forEach(artifact => {
         const file = artifact.file;
         const shaMsg = labelByError(`${file.sha1}`, file.sha1Ok);
         const md5Msg = labelByError(`${file.md5}`, file.md5Ok);
@@ -46,13 +47,14 @@ mavenDownload(
     });
     // Print Status
     //console.log(JSON.stringify(res, null, 2));
-    if (res.isOk) {
-        console.info("All files downloaded", clc.green("SuccessFull"), "in", res.elapseTime);
+    if (data.isOk) {
+        console.info("All files downloaded", clc.green("SuccessFull"), "in", data.elapseTime);
     } else {
         console.error(clc.red(getTextSecurityAlert()));
+        console.log(JSON.stringify(data, null, 2));
         process.exit(1);
     }
-    return res;
+    return data;
 }).catch(err => {
     console.error(clc.red(`
 -------------------------------------------------- 
