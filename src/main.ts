@@ -13,7 +13,7 @@ Options:
  --hash-file                     Write the Hash in a file postfix by algo
  --hash-url                      Write the Hash Url
 Examples:
- # download jar as format groupId:artifactId:packaging:classifier:version 
+ # download jar as format groupId:artifactId:packaging:classifier:version (https://maven.apache.org/pom.html#Maven_Coordinates)
  maven-id-resolver org.apache.commons:commons-lang3:3.4
  # download multi jar
  maven-id-resolver com.google.guava:guava:25.1-jre com.google.guava:guava::sources:25.1-jre com.google.guava:guava:jar:javadoc:25.1-jre
