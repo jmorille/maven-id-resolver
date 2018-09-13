@@ -1,4 +1,7 @@
 # maven-id-resolver
+## maven id 
+https://maven.apache.org/pom.html#Maven_Coordinates
+Maven id managed as format ```groupId:artifactId:packaging:classifier:version```
 
 ## Release a version
 ```bash
